@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { LinkedInPost, TopVoiceResponse, KeywordSearchResponse } from '../types';
+import { LinkedInPost, TopVoiceResponse, KeywordSearchResponse } from '../lib/types';
 
 const DATA_DIR = path.join(process.cwd(), 'app/data');
 const TOP_VOICE_FILE = path.join(DATA_DIR, 'topvoice_posts.json');
