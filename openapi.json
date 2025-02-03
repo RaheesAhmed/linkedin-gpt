@@ -1,0 +1,193 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "LinkedIn GPT API",
+    "description": "API for LinkedIn GPT to fetch posts and manage subscriptions",
+    "version": "v1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://your-api-domain.com"
+    }
+  ],
+  "paths": {
+    "/api/linkedin/top-voices": {
+      "get": {
+        "description": "Get posts from LinkedIn Top Voices",
+        "operationId": "getTopVoicesPosts",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "description": "User's authentication token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved posts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "posts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LinkedInPost"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/linkedin/custom-profiles": {
+      "get": {
+        "description": "Get posts from custom LinkedIn profiles",
+        "operationId": "getCustomProfilesPosts",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "description": "User's authentication token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "profiles",
+            "in": "query",
+            "description": "LinkedIn profile URLs (max 2)",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 2
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved posts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "posts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LinkedInPost"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/subscription/verify": {
+      "get": {
+        "description": "Verify user's subscription status",
+        "operationId": "verifySubscription",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "header",
+            "description": "User's authentication token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully verified subscription",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "plan": {
+                      "type": "string",
+                      "enum": ["free", "paid", "paid+"]
+                    },
+                    "features": {
+                      "type": "object",
+                      "properties": {
+                        "customProfiles": {
+                          "type": "boolean"
+                        },
+                        "keywordSearch": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LinkedInPost": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "authorProfile": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "engagementMetrics": {
+            "type": "object",
+            "properties": {
+              "reactions": {
+                "type": "number"
+              },
+              "comments": {
+                "type": "number"
+              },
+              "shares": {
+                "type": "number"
+              }
+            }
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}
