@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { findUserByEmail } from '@/app/lib/utils';
 import { LinkedInPost } from '@/app/lib/types';
+import { fetchTopVoice, readTopVoiceFile, fetchLinkedInPosts, searchPostsByKeyword } from '@/app/lib/services/linkedin';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -36,8 +37,22 @@ export async function GET(request: Request) {
 
     if (path === '/top-voices') {
       // Free tier - Top Voices posts
-      const posts = await fetchTopVoicesPosts();
-      return NextResponse.json({ posts });
+      try {
+        // Try to read from cache first
+        const response = await readTopVoiceFile();
+        return NextResponse.json(response);
+      } catch (error) {
+        // If cache fails, fetch new data
+        const posts = await fetchTopVoice();
+        return NextResponse.json({
+          posts,
+          message: 'Want more insights? Try our paid plans for custom profile analysis and keyword search!',
+          upgrade_options: {
+            basic: 'Analyze up to 2 LinkedIn profiles of your choice',
+            pro: 'Get keyword-based insights and AI-powered prompt generation'
+          }
+        });
+      }
     }
 
     if (path === '/custom-profiles') {
@@ -55,8 +70,32 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Maximum 2 profiles allowed' }, { status: 400 });
       }
 
-      const posts = await fetchCustomProfilePosts(profiles);
-      return NextResponse.json({ posts });
+      // Fetch posts for each profile
+      const allPosts = await Promise.all(
+        profiles.map(profile => fetchLinkedInPosts(profile))
+      );
+      
+      // Combine and sort all posts
+      const combinedPosts = allPosts
+        .flat()
+        .sort((a, b) => new Date(b.parsed_datetime).getTime() - new Date(a.parsed_datetime).getTime());
+
+      return NextResponse.json({ posts: combinedPosts });
+    }
+
+    if (path === '/search') {
+      // Paid+ tier - Keyword search
+      if (user.subscriptionPlan !== 'paid+') {
+        return NextResponse.json({ error: 'Premium subscription required' }, { status: 403 });
+      }
+
+      const keyword = searchParams.get('keyword');
+      if (!keyword) {
+        return NextResponse.json({ error: 'No keyword provided' }, { status: 400 });
+      }
+
+      const searchResults = await searchPostsByKeyword(keyword);
+      return NextResponse.json(searchResults);
     }
 
     return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
@@ -64,42 +103,4 @@ export async function GET(request: Request) {
     console.error('LinkedIn API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
-
-// Mock functions for LinkedIn data fetching
-// In production, these would interact with LinkedIn's API
-async function fetchTopVoicesPosts(): Promise<LinkedInPost[]> {
-  // Mock data
-  return [
-    {
-      id: '1',
-      authorProfile: 'https://linkedin.com/in/top-voice-1',
-      content: 'Sample post from Top Voice 1',
-      url: 'https://linkedin.com/post/1',
-      engagementMetrics: {
-        reactions: 1000,
-        comments: 50,
-        shares: 20
-      },
-      topics: ['AI', 'Technology'],
-      createdAt: new Date().toISOString()
-    }
-  ];
-}
-
-async function fetchCustomProfilePosts(profiles: string[]): Promise<LinkedInPost[]> {
-  // Mock data
-  return profiles.map((profile, index) => ({
-    id: String(index + 1),
-    authorProfile: profile,
-    content: `Sample post from ${profile}`,
-    url: `https://linkedin.com/post/${index + 1}`,
-    engagementMetrics: {
-      reactions: 500,
-      comments: 25,
-      shares: 10
-    },
-    topics: ['Business', 'Innovation'],
-    createdAt: new Date().toISOString()
-  }));
 }
