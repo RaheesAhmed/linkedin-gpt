@@ -1,113 +1,36 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "LinkedIn GPT API",
-    "description": "API for LinkedIn GPT to fetch posts and manage subscriptions",
+    "title": "LinkedGPT API",
+    "description": "API for LinkedIn content analysis and subscription management",
     "version": "v1.0.0"
   },
   "servers": [
     {
-      "url": "https://your-api-domain.com"
+      "url": "https://your-domain.com/api"
     }
   ],
   "paths": {
-    "/api/linkedin/top-voices": {
+    "/linkedin": {
       "get": {
-        "description": "Get posts from LinkedIn Top Voices",
-        "operationId": "getTopVoicesPosts",
+        "description": "Get LinkedIn analysis data",
+        "operationId": "getLinkedInAnalysis",
         "parameters": [
           {
-            "name": "token",
-            "in": "header",
-            "description": "User's authentication token",
+            "name": "type",
+            "in": "query",
+            "description": "Type of analysis (topVoices, customProfile, keywordSearch)",
             "required": true,
             "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved posts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "posts": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/LinkedInPost"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/linkedin/custom-profiles": {
-      "get": {
-        "description": "Get posts from custom LinkedIn profiles",
-        "operationId": "getCustomProfilesPosts",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "header",
-            "description": "User's authentication token",
-            "required": true,
-            "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": ["topVoices", "customProfile", "keywordSearch"]
             }
           },
           {
-            "name": "profiles",
+            "name": "query",
             "in": "query",
-            "description": "LinkedIn profile URLs (max 2)",
-            "required": true,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "maxItems": 2
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved posts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "posts": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/LinkedInPost"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/subscription/verify": {
-      "get": {
-        "description": "Verify user's subscription status",
-        "operationId": "verifySubscription",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "header",
-            "description": "User's authentication token",
-            "required": true,
+            "description": "Search query for keyword search",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -115,33 +38,130 @@
         ],
         "responses": {
           "200": {
-            "description": "Successfully verified subscription",
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/TopVoicesResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CustomProfileResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/KeywordSearchResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "sessionAuth": []
+          }
+        ]
+      }
+    },
+    "/subscription": {
+      "post": {
+        "description": "Activate a subscription with a license key",
+        "operationId": "activateSubscription",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "licenseKey": {
+                    "type": "string",
+                    "description": "Gumroad license key"
+                  }
+                },
+                "required": ["licenseKey"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription activated successfully",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "plan": {
-                      "type": "string",
-                      "enum": ["free", "paid", "paid+"]
+                    "success": {
+                      "type": "boolean"
                     },
-                    "features": {
-                      "type": "object",
-                      "properties": {
-                        "customProfiles": {
-                          "type": "boolean"
-                        },
-                        "keywordSearch": {
-                          "type": "boolean"
-                        }
-                      }
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "sessionAuth": []
+          }
+        ]
+      },
+      "get": {
+        "description": "Get current subscription status",
+        "operationId": "getSubscriptionStatus",
+        "responses": {
+          "200": {
+            "description": "Current subscription status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["active", "cancelled", "none"]
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
                     }
                   }
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "sessionAuth": []
+          }
+        ]
       }
     }
   },
@@ -153,40 +173,71 @@
           "id": {
             "type": "string"
           },
-          "authorProfile": {
-            "type": "string"
-          },
           "content": {
             "type": "string"
           },
-          "url": {
-            "type": "string"
-          },
-          "engagementMetrics": {
+          "engagement": {
             "type": "object",
             "properties": {
-              "reactions": {
+              "likes": {
                 "type": "number"
               },
               "comments": {
                 "type": "number"
-              },
-              "shares": {
-                "type": "number"
               }
             }
+          }
+        }
+      },
+      "TopVoicesResponse": {
+        "type": "object",
+        "properties": {
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkedInPost"
+            }
+          }
+        }
+      },
+      "CustomProfileResponse": {
+        "type": "object",
+        "properties": {
+          "analysis": {
+            "type": "string"
           },
-          "topics": {
+          "recommendations": {
             "type": "array",
             "items": {
               "type": "string"
             }
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
+      },
+      "KeywordSearchResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkedInPost"
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "sessionAuth": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

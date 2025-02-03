@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { LinkedInPost, TopVoiceResponse, KeywordSearchResponse } from '../lib/types';
+import { LinkedInPost, TopVoicesResponse, CustomProfileResponse, KeywordSearchResponse, ErrorResponse } from '../lib/types';
 
 const DATA_DIR = path.join(process.cwd(), 'app/data');
 const TOP_VOICE_FILE = path.join(DATA_DIR, 'topvoice_posts.json');
@@ -35,7 +35,7 @@ export async function fetchTopVoice(): Promise<LinkedInPost[]> {
   }
 }
 
-export async function readTopVoiceFile(): Promise<TopVoiceResponse> {
+export async function readTopVoiceFile(): Promise<TopVoicesResponse> {
   try {
     const topvoice = JSON.parse(fs.readFileSync(TOP_VOICE_FILE, 'utf8'));
     return {

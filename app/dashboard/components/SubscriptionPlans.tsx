@@ -148,8 +148,8 @@ export function SubscriptionPlans() {
               ))}
             </ul>
             <div className="mt-8">
-              {subscription.planId === plan.id ? (
-                <Button className="w-full bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-default" disabled>
+              {subscription.planId === plan.id || (plan.id === 'free' && !subscription.planId) ? (
+                <Button className="w-full bg-gray-100 text-gray-600 hover:bg-gray-100 cursor-not-allowed" disabled>
                   Current Plan
                 </Button>
               ) : (
@@ -157,7 +157,7 @@ export function SubscriptionPlans() {
                   className="w-full bg-linkedin-blue hover:bg-linkedin-darkBlue"
                   onClick={() => handleUpgrade(plan.gumroadUrl)}
                 >
-                  {plan.id === 'free' ? 'Current Plan' : 'Upgrade to Pro'}
+                  Upgrade to Pro
                 </Button>
               )}
             </div>
