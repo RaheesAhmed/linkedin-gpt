@@ -1,5 +1,4 @@
-import { prisma } from "@/lib/prisma"
-import { hash } from "bcryptjs"
+import { userService } from "@/lib/user-service"
 import { NextResponse } from "next/server"
 import * as z from "zod"
 
@@ -14,9 +13,7 @@ export async function POST(req: Request) {
     const json = await req.json()
     const body = userSchema.parse(json)
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email: body.email },
-    })
+    const existingUser = await userService.findByEmail(body.email)
 
     if (existingUser) {
       return NextResponse.json(
@@ -25,18 +22,13 @@ export async function POST(req: Request) {
       )
     }
 
-    const hashedPassword = await hash(body.password, 10)
-
-    const user = await prisma.user.create({
-      data: {
-        name: body.name,
-        email: body.email,
-        password: hashedPassword,
-      },
+    const user = await userService.create({
+      name: body.name,
+      email: body.email,
+      password: body.password,
     })
 
-    const { password: _, ...result } = user
-    return NextResponse.json(result)
+    return NextResponse.json(user)
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ message: error.issues }, { status: 400 })

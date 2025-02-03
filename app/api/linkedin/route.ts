@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import { findUserByEmail } from '@/app/lib/utils';
-import { LinkedInPost } from '@/app/lib/types';
+import { findUserByEmail } from '@/lib/utils';
+import { LinkedInPost } from '@/lib/types';
 import { fetchTopVoice, readTopVoiceFile, fetchLinkedInPosts, searchPostsByKeyword } from '@/app/lib/services/linkedin';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
