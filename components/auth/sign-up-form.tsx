@@ -10,9 +10,6 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
@@ -24,11 +21,11 @@ const formSchema = z.object({
 export function SignUpForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
       email: "",
       password: "",
     },
@@ -37,6 +34,8 @@ export function SignUpForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setLoading(true)
+      setError(null)
+
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
@@ -45,15 +44,24 @@ export function SignUpForm() {
         body: JSON.stringify(values),
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        const error = await response.json()
-        form.setError("root", { message: error.message })
+        if (data.message) {
+          setError(Array.isArray(data.message) 
+            ? data.message[0]?.message || "Validation error" 
+            : data.message
+          )
+        } else {
+          setError("Something went wrong. Please try again.")
+        }
         return
       }
 
       router.push("/sign-in")
     } catch (error) {
       console.error(error)
+      setError("Something went wrong. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -62,19 +70,6 @@ export function SignUpForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter your name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="email"
@@ -101,6 +96,11 @@ export function SignUpForm() {
             </FormItem>
           )}
         />
+        {error && (
+          <div className="text-sm font-medium text-destructive">
+            {error}
+          </div>
+        )}
         <Button className="w-full" type="submit" disabled={loading}>
           {loading ? "Creating account..." : "Create account"}
         </Button>

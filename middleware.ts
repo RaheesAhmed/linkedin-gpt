@@ -4,27 +4,20 @@ import type { NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request })
+  const isAuthPage = request.nextUrl.pathname.startsWith("/sign-in") || 
+                    request.nextUrl.pathname.startsWith("/sign-up")
 
-  if (!token) {
-    if (request.nextUrl.pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        { message: "Authentication required" },
-        { status: 401 }
-      )
-    }
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL("/dashboard", request.url))
+  }
 
-    const loginUrl = new URL("/sign-in", request.url)
-    loginUrl.searchParams.set("callbackUrl", request.url)
-    return NextResponse.redirect(loginUrl)
+  if (!token && request.nextUrl.pathname.startsWith("/dashboard")) {
+    return NextResponse.redirect(new URL("/sign-in", request.url))
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/api/:path*",
-    "/((?!api|_next/static|_next/image|favicon.ico|sign-in|sign-up).*)",
-  ],
+  matcher: ["/dashboard/:path*", "/sign-in", "/sign-up"]
 }

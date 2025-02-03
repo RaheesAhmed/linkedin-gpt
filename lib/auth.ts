@@ -1,7 +1,5 @@
 import { NextAuthOptions } from "next-auth"
-import { getServerSession } from "next-auth/next"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { NextResponse } from "next/server"
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -37,11 +35,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           const user = await res.json()
-          return {
-            id: user.id,
-            email: user.email,
-            subscriptionPlan: user.subscriptionPlan,
-          }
+          return user
         } catch (error) {
           console.error('Auth error:', error)
           return null
@@ -52,9 +46,11 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ token, session }) {
       if (token) {
-        session.user = token
+        session.user.id = token.id
+        session.user.email = token.email
+        session.user.subscriptionPlan = token.subscriptionPlan
+        session.user.createdAt = token.createdAt
       }
-
       return session
     },
     async jwt({ token, user }) {
@@ -62,15 +58,9 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.email = user.email
         token.subscriptionPlan = user.subscriptionPlan
+        token.createdAt = user.createdAt
       }
-
       return token
     }
   }
 }
-
-import NextAuth from "next-auth"
-
-const handler = NextAuth(authOptions)
-
-export { handler as GET, handler as POST }

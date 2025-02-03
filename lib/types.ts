@@ -1,13 +1,18 @@
 export interface User {
-  id: string;
-  email: string;
-  password: string; // Will be hashed
-  name: string;
-  subscriptionPlan: 'free' | 'paid' | 'paid+';
-  customProfiles?: string[]; // LinkedIn profile URLs
-  keywords?: string[];
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  name: string
+  email: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UserCredentials {
+  email: string
+  password: string
+}
+
+export interface UserRegistration extends UserCredentials {
+  name: string
 }
 
 export interface KnowledgeBase {
@@ -29,7 +34,6 @@ export interface LinkedInPost {
   createdAt: string;
 }
 
-
 export interface LinkedInPost {
   text: string;
   parsed_datetime: string;
@@ -44,18 +48,6 @@ export interface LinkedInPost {
     shares: number;
   };
   post_url: string;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  password: string;
-  name: string;
-  subscriptionPlan: 'free' | 'paid' | 'paid+';
-  customProfiles?: string[];
-  keywords?: string[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface TopVoiceResponse {

@@ -1,1 +1,12 @@
-[]
+{
+  "users": [
+    {
+      "id": "1738583343388",
+      "email": "admin@virtuhelp.com",
+      "password": "$2a$10$.e619tBTPJN7rlFoEIxyweFawgr7hq0To111pYkGaqGuH72YLqd2G",
+      "subscriptionPlan": "FREE",
+      "createdAt": "2025-02-03T11:49:03.388Z"
+      
+    }
+  ]
+}

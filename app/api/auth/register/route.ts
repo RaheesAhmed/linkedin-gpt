@@ -1,39 +1,49 @@
-import { userService } from "@/lib/user-service"
 import { NextResponse } from "next/server"
 import * as z from "zod"
 
 const userSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  password: z.string().min(8, {
+    message: "Password must be at least 8 characters.",
+  }),
 })
 
 export async function POST(req: Request) {
   try {
     const json = await req.json()
-    const body = userSchema.parse(json)
+    
+    try {
+      const body = userSchema.parse(json)
+      
+      const response = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
 
-    const existingUser = await userService.findByEmail(body.email)
+      if (!response.ok) {
+        const error = await response.json()
+        return NextResponse.json(
+          { message: error.error },
+          { status: response.status }
+        )
+      }
 
-    if (existingUser) {
-      return NextResponse.json(
-        { message: "User with this email already exists" },
-        { status: 409 }
-      )
+      const user = await response.json()
+      return NextResponse.json(user)
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { message: error.issues[0].message },
+          { status: 400 }
+        )
+      }
+      throw error
     }
-
-    const user = await userService.create({
-      name: body.name,
-      email: body.email,
-      password: body.password,
-    })
-
-    return NextResponse.json(user)
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ message: error.issues }, { status: 400 })
-    }
-
+    console.error('Registration error:', error)
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
